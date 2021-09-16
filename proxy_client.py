@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import socket
-from multiprocessing import Pool
 
 HOST = 'localhost'
 PORT = 8001
@@ -27,9 +26,7 @@ def connect(addr):
 
 
 def main():
-    address = [(HOST, PORT)]
-    with Pool() as p:
-        p.map(connect, address * 3)
+    connect((HOST, PORT))
 
 
 if __name__ == '__main__':
