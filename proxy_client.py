@@ -29,7 +29,7 @@ def connect(addr):
 def main():
     address = [(HOST, PORT)]
     with Pool() as p:
-        p.map(connect, address * 10)
+        p.map(connect, address * 3)
 
 
 if __name__ == '__main__':

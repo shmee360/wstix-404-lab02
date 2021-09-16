@@ -3,7 +3,7 @@ import socket
 import sys
 from multiprocessing import Process
 
-HOST = ''
+HOST = 'localhost'
 PORT = 8001
 BUFFER_SIZE = 1024
 
@@ -21,6 +21,17 @@ def get_remote_ip(host):
     return remote_ip
 
 
+def handle_request(addr, conn, proxy_end):
+    full_data = conn.recv(BUFFER_SIZE)
+    proxy_end.sendall(full_data)
+
+    full_data = proxy_end.recv(BUFFER_SIZE)
+
+    conn.sendall(full_data)
+    conn.shutdown(socket.SHUT_RDWR)
+    conn.close()
+
+
 def main():
     host = 'www.google.com'
     port = 80
@@ -34,20 +45,21 @@ def main():
 
         while True:
             conn, addr = proxy_start.accept()
-            p = Process(target=handle_client, args=(addr, conn))
-            p.daemon = True
-            p.start()
-            print('Started process', p)
+            print('Connected by', addr)
+
+            with socket.socket(socket.AF_INET,
+                               socket.SOCK_STREAM) as proxy_end:
+                print(f'Connecting to {host} on port {port}...')
+                remote_ip = get_remote_ip(host)
+
+                proxy_end.connect((remote_ip, port))
+
+                p = Process(target=handle_request,
+                            args=(addr, conn, proxy_end))
+                p.daemon = True
+                p.start()
+                print('Started process', p)
             conn.close()
-
-
-def handle_client(addr, conn):
-    print('Connected by', addr)
-
-    full_data = conn.recv(BUFFER_SIZE)
-    conn.sendall(full_data)
-    conn.shutdown(socket.SHUT_RDWR)
-    conn.close()
 
 
 if __name__ == '__main__':
